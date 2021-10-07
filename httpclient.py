@@ -1,21 +1,20 @@
 """
-- NOTE: REPLACE 'N' Below with your section, year, and lab number
-- CS2911 - 0NN
-- Fall 202N
-- Lab N
+- CS2911 - 011
+- Fall 2021
+- Lab 5 - HTTP Client
 - Names:
-  - 
-  - 
+  - Eden Basso
+  - Lucas Gral
 
 An HTTP client
 
-Introduction: (Describe the lab in your own words)
+Introduction: (Describe the lab in your own words) - LG
 
 
 
 
 Summary: (Summarize your experience with the lab, what you learned, what you liked, what you
-   disliked, and any suggestions you have for improvement)
+   disliked, and any suggestions you have for improvement) - EB
 
 
 
@@ -101,6 +100,7 @@ def do_http_exchange(use_https, host, port, resource, file_name):
     :param file_name: string (str) containing name of file in which to store the retrieved resource
     :return: the status code
     :rtype: int
+    :author: Lucas Gral
     """
 
     socket = create_http_socket(host, port)
@@ -113,22 +113,75 @@ def do_http_exchange(use_https, host, port, resource, file_name):
 # Define additional functions here as necessary
 # Don't forget docstrings and :author: tags
 
+
 def create_http_socket(host, port):
-    #...
+    """
+    Creates client socket and connects it to the server
+
+    :param bytes host: ASCII domain name or IP address of host
+    :param int port: port number to connect to on server host
+    :return: client data socket
+    :rtype: socket.pyi
+    :author: Eden Basso
+    """
+    http_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    http_socket.connect((host, port))
+    # http_socket.sendall(resource) needs to be called in http_send_request
+    return http_socket
+
 
 def get_http_data(socket, resource, file_name):
-    #...
+    """
+    ...
+
+    :param:
+    :param:
+    :param:
+    :return:
+    :rtype:
+    :author: Lucas Gral
+    """
     http_send_request(socket, resource)
     (resource_type, resource_data) = http_get_response(socket)
     save_resource_to_file(file_name, resource_type, resource_data)
 
-def http_send_request(socket, resource):
-    #...
+def http_send_request(http_socket, resource):
+    """
+    ...
 
-def http_get_response(socket):
-    #...
+    :param:
+    :param:
+    :return:
+    :rtype:
+    :author: Lucas Gral
+    """
 
-def save_resource_to_file(file_name, resource_data):
-    #...
+
+def http_get_response(http_socket):
+    """
+    Parses through response to determine what protocol to use for reading its data
+
+    :param socket.pyi http_socket: client data socket
+    :return: library holding information necessary to save data
+    :rtype: library
+    :author: Eden Basso
+    """
+    response = http_socket.recv()
+    # reads through status line parses through and returns status code
+    # parses through header which returns body size and is_chuncked
+    # parses through body using protocol for data
+
+
+def save_resource_to_file(file_name, recource_type, resource_data):
+    """
+    Saves the body of the response to a file
+
+    :param str file_name: name of the file the resource will be saved to
+    :param str resource_type: type of body the response has
+    :param bytes resource_data: data that will be saved to the file
+    :return: the file containing the read-through data in it
+    :rtype: file
+    :author: Eden Basso
+    """
 
 main()
