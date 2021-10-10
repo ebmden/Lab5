@@ -143,7 +143,7 @@ def get_http_data(http_client_socket, resource, file_name):
     :author: Lucas Gral
     """
     http_send_request(http_client_socket, resource)
-    (resource_type, resource_data) = http_get_response(http_client_socket)  # http_client_socket may need to return a library at somepoint once method is complete
+    (resource_type, resource_data) = http_get_response(http_client_socket)  # http_client_socket may need to return a Dictionary at somepoint once method is complete
     save_resource_to_file(file_name, resource_type, resource_data)
 
 
@@ -184,15 +184,17 @@ def http_get_response(http_client_socket):
     :author: Eden Basso
     """
 
+
 def http_read_header(resource):
     """
     Parses through the status line to determine the size of the body and if the data is chunked or content length
 
     :param bytes resource: the resource received from the client data socket
     :return: the size of the body and if the body of the resource is chunked or content length
-    :rtype: Library:
+    :rtype: Dictionary:
     :author: Eden Basso:
     """
+
 
 def read_response_data(resource_body):
     """
