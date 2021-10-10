@@ -105,10 +105,10 @@ def do_http_exchange(use_https, host, port, resource, file_name):
 
     http_client_socket = create_http_socket(host, port)
     # if use_https ... in future
-    get_http_data(http_client_socket, resource, file_name)
-    socket.close()
+    status = get_http_data(http_client_socket, host, resource, file_name)
+    http_client_socket.close()
  
-    return 500  # Replace this "server error" with the actual status code
+    return status  # Replace this "server error" with the actual status code
 
 # Define additional functions here as necessary
 # Don't forget docstrings and :author: tags
@@ -130,7 +130,7 @@ def create_http_socket(host, port):
     return http_client_socket
 
 
-def get_http_data(http_client_socket, resource, file_name):
+def get_http_data(http_client_socket, host, resource, file_name):
     """
     Sends HTTP request to receive data from socket and saves the appropriately parsed body to a file
 
@@ -138,16 +138,16 @@ def get_http_data(http_client_socket, resource, file_name):
     :param bytes resource: the ASCII path/name of resource to get. This is everything in the URL
            after the domain name, including the first /.
     :param file_name: string (str) containing name of file in which to store the retrieved resource
-    :return:
-    :rtype:
+    :return: status
+    :rtype: int
     :author: Lucas Gral
     """
-    http_send_request(http_client_socket, resource)
-    (resource_type, resource_data) = http_get_response(http_client_socket)  # http_client_socket may need to return a Dictionary at somepoint once method is complete
+    http_send_request(http_client_socket, host, resource)
+    (status, resource_type, resource_data) = http_get_response(http_client_socket)  # http_client_socket may need to return a Dictionary at somepoint once method is complete
     save_resource_to_file(file_name, resource_type, resource_data)
+    return status
 
-
-def http_send_request(http_client_socket, resource):
+def http_send_request(http_client_socket, host, resource):
     """
     ...
 
@@ -158,30 +158,60 @@ def http_send_request(http_client_socket, resource):
     :author: Lucas Gral
     """
 
+    request = b'GET ' + resource + b' HTTP/1.1\r\n'
+    request += b'host: ' + host + b'\r\n'
+    request += b'\r\n'
+    print("requesting", request, "from", host)
+    http_client_socket.sendall(request)
+    print("sent request")
 
-def http_get_response(http_client_socket, is_chunked, resource_length):
+def http_get_word(http_client_socket):
+    """
+    Gets the next string of characters surounded by space or ending in \r\n
+    Returns the string, and also whether it's the end of the line.
+
+    This could be used instead of next_byte or socket.recv
+
+    :param socket.pyi http_client_socket: client data socket
+    :return: (word, endOfLine)
+    :rtype: tuple
+    :author: Eden Basso
+    """
+
+    lastByte = b''
+    word = b''
+    while (lastByte := http_client_socket.recv(1)) != b' ':
+        if(lastByte == b'\r'):
+            if((lastByte := http_client_socket.recv(1)) == b'\n'):
+                return (word, True)
+            else:
+                word += lastByte
+        else:
+            word += lastByte
+
+    return (word, False)
+
+#############
+# NOTE: This method will probably need a lot of helper methods. Should we change the current arangement of who does what?
+############
+def http_get_response(http_client_socket):
     """
     Parses through response to determine what protocol to use for reading its data
 
     :param socket.pyi http_client_socket: client data socket
-    :param boolean is_chunked: if the body of the resource is chunked data or content length data
-    :param int resource_length: the length of the body of the resource
-    :return: library holding information + read through data necessary to save data to file
+    :return: library holding information necessary to save data
     :rtype: library
     :author: Eden Basso
     """
-    http_data_info = {}
-    resource = http_client_socket.recv()  # recieves recource data from client socket
+    resource = http_client_socket.recv(1)  # recieves recource data from client socket
     # MAY NOT NEED: reads through status line parses through and returns status code
-    resource_info = http_read_header(resource)  # parses through header which returns body size and is_chuncked
-    if resource_info[is_chunked]:
-        resource_data = http_data_info[read_chunked_response_data(resource_info[resource_length])]  # parses through body using protocol for data
-        is_chunked = http_data_info[True]
-    else:
-        resource_data = http_data_info[read_length_response_data(resource_info[resource_length])]  # parses through body using protocol for data
-        is_chunked = http_data_info[False]
-    return http_data_info
 
+    status = http_get_status_code(http_client_socket) #Added this just to see if everything so far is working
+
+    resource_info = http_read_header(resource)  # parses through header which returns body size and is_chuncked
+    # parses through body using protocol for data
+
+    return (status, b'', b'')
 
 """def http_read_status(resource):
     
@@ -192,6 +222,21 @@ def http_get_response(http_client_socket, is_chunked, resource_length):
     :rtype: int
     :author: Eden Basso
     """
+
+def http_get_status_code(http_client_socket):
+    """
+    Gets the status code from the first http response line
+
+    :param socket.pyi http_client_socket: client data socket
+    :return: status code
+    :rtype: int
+    :author: Lucas Gral
+    """
+
+    version = http_get_word(http_client_socket)  # expecting HTTP/1.1
+    status = http_get_word(http_client_socket)
+    print("Status", status[0], http_get_word(http_client_socket)[0])
+    return status[0]
 
 
 def http_read_header(resource):
@@ -204,8 +249,8 @@ def http_read_header(resource):
     :author: Eden Basso:
     """
     resource_info = {}
-    resource_length = resource_info["todo"]
-    is_chunked = resource_info[True]
+    # resource_length = resource_info[*BODY SIZE*]
+    # resource_type = resource_info[*TYPE*]
     return resource_info
 
 
