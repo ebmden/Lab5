@@ -170,7 +170,7 @@ def http_get_response(http_client_socket):
     """
     resource = http_client_socket.recv()  # recieves recource data from client socket
     # MAY NOT NEED: reads through status line parses through and returns status code
-    # parses through header which returns body size and is_chuncked
+    resource_info = http_read_header(resource)  # parses through header which returns body size and is_chuncked
     # parses through body using protocol for data
 
 
@@ -191,17 +191,32 @@ def http_read_header(resource):
 
     :param bytes resource: the resource received from the client data socket
     :return: the size of the body and if the body of the resource is chunked or content length
-    :rtype: Dictionary:
+    :rtype: Dictionary
     :author: Eden Basso:
     """
+    resource_info = {}
+    # resource_length = resource_info[*BODY SIZE*]
+    # resource_type = resource_info[*TYPE*]
+    return resource_info
 
 
-def read_response_data(resource_body):
+def read_chunked_response_data(resource_body):
     """
-    Parses through body and reads the data using the correct protocol for the body
+    Parses through body and reads chunked data using the correct protocol for the body
 
     :param bytes resource_body: the body of the resource to be parsed through
-    :return: the read through body
+    :return: the read through chunked-data body
+    :rtype:
+    :author: Lucas Gral
+    """
+
+
+def read_length_response_data(resource_body):
+    """
+    Parses through body and reads content length data using the correct protocol for the body
+
+    :param bytes resource_body: the body of the resource to be parsed through
+    :return: the read through content length-data body
     :rtype:
     :author: Lucas Gral
     """
