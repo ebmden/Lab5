@@ -159,19 +159,28 @@ def http_send_request(http_client_socket, resource):
     """
 
 
-def http_get_response(http_client_socket):
+def http_get_response(http_client_socket, is_chunked, resource_length):
     """
     Parses through response to determine what protocol to use for reading its data
 
     :param socket.pyi http_client_socket: client data socket
-    :return: library holding information necessary to save data
+    :param boolean is_chunked: if the body of the resource is chunked data or content length data
+    :param int resource_length: the length of the body of the resource
+    :return: library holding information + read through data necessary to save data to file
     :rtype: library
     :author: Eden Basso
     """
+    http_data_info = {}
     resource = http_client_socket.recv()  # recieves recource data from client socket
     # MAY NOT NEED: reads through status line parses through and returns status code
     resource_info = http_read_header(resource)  # parses through header which returns body size and is_chuncked
-    # parses through body using protocol for data
+    if resource_info[is_chunked]:
+        resource_data = http_data_info[read_chunked_response_data(resource_info[resource_length])]  # parses through body using protocol for data
+        is_chunked = http_data_info[True]
+    else:
+        resource_data = http_data_info[read_length_response_data(resource_info[resource_length])]  # parses through body using protocol for data
+        is_chunked = http_data_info[False]
+    return http_data_info
 
 
 """def http_read_status(resource):
@@ -195,8 +204,8 @@ def http_read_header(resource):
     :author: Eden Basso:
     """
     resource_info = {}
-    # resource_length = resource_info[*BODY SIZE*]
-    # resource_type = resource_info[*TYPE*]
+    resource_length = resource_info["todo"]
+    is_chunked = resource_info[True]
     return resource_info
 
 
