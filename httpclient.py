@@ -103,9 +103,9 @@ def do_http_exchange(use_https, host, port, resource, file_name):
     :author: Lucas Gral
     """
 
-    socket = create_http_socket(host, port)
-    #if use_https ... in future
-    get_http_data(socket, resource, file_name)
+    http_client_socket = create_http_socket(host, port)
+    # if use_https ... in future
+    get_http_data(http_client_socket, resource, file_name)
     socket.close()
  
     return 500  # Replace this "server error" with the actual status code
@@ -124,28 +124,30 @@ def create_http_socket(host, port):
     :rtype: socket.pyi
     :author: Eden Basso
     """
-    http_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    http_socket.connect((host, port))
+    http_client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    http_client_socket.connect((host, port))
     # http_socket.sendall(resource) needs to be called in http_send_request
-    return http_socket
+    return http_client_socket
 
 
-def get_http_data(socket, resource, file_name):
+def get_http_data(http_client_socket, resource, file_name):
     """
-    ...
+    Sends HTTP request to receive data from socket and saves the appropriately parsed body to a file
 
-    :param:
-    :param:
-    :param:
+    :param socket.pyi http_client_socket: the client data socket used to collect the resource of the URL
+    :param bytes resource: the ASCII path/name of resource to get. This is everything in the URL
+           after the domain name, including the first /.
+    :param file_name: string (str) containing name of file in which to store the retrieved resource
     :return:
     :rtype:
     :author: Lucas Gral
     """
-    http_send_request(socket, resource)
-    (resource_type, resource_data) = http_get_response(socket)
+    http_send_request(http_client_socket, resource)
+    (resource_type, resource_data) = http_get_response(http_client_socket)  # http_client_socket may need to return a library at somepoint once method is complete
     save_resource_to_file(file_name, resource_type, resource_data)
 
-def http_send_request(http_socket, resource):
+
+def http_send_request(http_client_socket, resource):
     """
     ...
 
@@ -157,22 +159,53 @@ def http_send_request(http_socket, resource):
     """
 
 
-def http_get_response(http_socket):
+def http_get_response(http_client_socket):
     """
     Parses through response to determine what protocol to use for reading its data
 
-    :param socket.pyi http_socket: client data socket
+    :param socket.pyi http_client_socket: client data socket
     :return: library holding information necessary to save data
     :rtype: library
     :author: Eden Basso
     """
-    response = http_socket.recv()
-    # reads through status line parses through and returns status code
+    resource = http_client_socket.recv()  # recieves recource data from client socket
+    # MAY NOT NEED: reads through status line parses through and returns status code
     # parses through header which returns body size and is_chuncked
     # parses through body using protocol for data
 
 
-def save_resource_to_file(file_name, recource_type, resource_data):
+"""def http_read_status(resource):
+    
+    This method parses through the status line of the resource to determine the status code
+    
+    :param bytes resource: the resource received from the client data socket
+    :return: the status code/if the body of the resource is contained in the resource
+    :rtype: int
+    :author: Eden Basso
+    """
+
+def http_read_header(resource):
+    """
+    Parses through the status line to determine the size of the body and if the data is chunked or content length
+
+    :param bytes resource: the resource received from the client data socket
+    :return: the size of the body and if the body of the resource is chunked or content length
+    :rtype: Library:
+    :author: Eden Basso:
+    """
+
+def read_response_data(resource_body):
+    """
+    Parses through body and reads the data using the correct protocol for the body
+
+    :param bytes resource_body: the body of the resource to be parsed through
+    :return: the read through body
+    :rtype:
+    :author: Lucas Gral
+    """
+
+
+def save_resource_to_file(file_name, resource_type, resource_data):
     """
     Saves the body of the response to a file
 
@@ -184,4 +217,7 @@ def save_resource_to_file(file_name, recource_type, resource_data):
     :author: Eden Basso
     """
 
+
+#  invokes main() function
 main()
+
