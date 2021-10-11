@@ -130,7 +130,7 @@ def create_http_socket(host, port):
     return http_client_socket
 
 
-def get_http_data(http_client_socket, host, resource, file_name):
+def get_http_data(http_client_socket, host, resource, file_name, status=None):
     """
     Sends HTTP request to receive data from socket and saves the appropriately parsed body to a file
 
@@ -138,14 +138,18 @@ def get_http_data(http_client_socket, host, resource, file_name):
     :param bytes resource: the ASCII path/name of resource to get. This is everything in the URL
            after the domain name, including the first /.
     :param file_name: string (str) containing name of file in which to store the retrieved resource
+    :param int status:
     :return: status
     :rtype: int
     :author: Lucas Gral
     """
     http_send_request(http_client_socket, host, resource)
-    (status, resource_type, resource_data) = http_get_response(http_client_socket)  # http_client_socket may need to return a Dictionary at somepoint once method is complete
-    save_resource_to_file(file_name, resource_type, resource_data)
-    return status
+    http_data_info = http_get_response(http_client_socket)
+    http_file_name = http_data_info[file_name]
+    #(status, resource_type, resource_data) = http_get_response(http_client_socket)  # http_client_socket may need to return a Dictionary at somepoint once method is complete
+    save_resource_to_file(http_data_info)
+    return http_data_info.get(status)
+
 
 def http_send_request(http_client_socket, host, resource):
     """
@@ -196,19 +200,21 @@ def http_get_word(http_client_socket):
 #############
 # NOTE: This method will probably need a lot of helper methods. Should we change the current arangement of who does what?
 ############
-def http_get_response(http_client_socket, is_chunked, resource_length):
+def http_get_response(http_client_socket, is_chunked=None, resource_length=None, status=None):
     """
     Parses through response to determine what protocol to use for reading its data
 
     :param socket.pyi http_client_socket: client data socket
     :param boolean is_chunked: if the body of the resource is chunked data or content length data
     :param int resource_length: the length of the body of the resource
+    :param int status:
     :return: library holding information + read through data necessary to save data to file
     :rtype: library
     :author: Eden Basso
     """
     http_data_info = {}
-    resource = http_client_socket.recv()  # recieves recource data from client socket
+    resource = http_client_socket.recv(1)  # recieves recource data from client socket
+    status = http_data_info[http_get_status_code(http_client_socket)]  # Added this just to see if everything so far is working
     # MAY NOT NEED: reads through status line parses through and returns status code
     resource_info = http_read_header(resource)  # parses through header which returns body size and is_chuncked
     if resource_info[is_chunked]:
@@ -219,22 +225,8 @@ def http_get_response(http_client_socket, is_chunked, resource_length):
         resource_data = http_data_info[
             read_length_response_data(resource_info[resource_length])]  # parses through body using protocol for data
         is_chunked = http_data_info[False]
-
-    resource = http_client_socket.recv(1)  # recieves recource data from client socket
-    status = http_get_status_code(http_client_socket) #Added this just to see if everything so far is working
     return http_data_info
 
-
-
-"""def http_read_status(resource):
-    
-    This method parses through the status line of the resource to determine the status code
-    
-    :param bytes resource: the resource received from the client data socket
-    :return: the status code/if the body of the resource is contained in the resource
-    :rtype: int
-    :author: Eden Basso
-    """
 
 def http_get_status_code(http_client_socket):
     """
@@ -264,6 +256,11 @@ def http_read_header(resource):
     resource_info = {}
     resource_length = resource_info["todo"]
     is_chunked = resource_info[True]
+    # Chunked: 54 72 61 6e 73 66 65 72 2d 45 6e 63 6f 64 69 6e 67 3a 20 63 68 75 6e 6b 65 64 0d 0a
+    # len: 43 6f 6e 74 65 6e 74 2d 4c 65 6e 67 74 68 3a 20
+    chunk_bytes = b'\x'
+
+
     return resource_info
 
 
@@ -289,10 +286,11 @@ def read_length_response_data(resource_body):
     """
 
 
-def save_resource_to_file(file_name, resource_type, resource_data):
+def save_resource_to_file(http_data_info, file_name=None, resource_type=None, resource_data=None):
     """
     Saves the body of the response to a file
 
+    :param: dictionary http_data_info: information allowing method to store data inside a file
     :param str file_name: name of the file the resource will be saved to
     :param str resource_type: type of body the response has
     :param bytes resource_data: data that will be saved to the file
@@ -300,7 +298,9 @@ def save_resource_to_file(file_name, resource_type, resource_data):
     :rtype: file
     :author: Eden Basso
     """
-
+    with open(file_name + '.txt', 'wb') as http_file:
+        http_file.write(resource_data)
+        http_file.close()
 
 #  invokes main() function
 main()
