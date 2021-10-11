@@ -9,9 +9,11 @@
 An HTTP client
 
 Introduction: (Describe the lab in your own words) - LG
-
-
-
+The goal of this lab was to impliment an HTTP client; a program that makes HTTP requests, parses the responses, and saves the response data to a file,
+just like a web browser (albiet without the graphics). The program should send a valid HTTP request (via TCP) to the host provided
+to the http_do_exchange function. After making the request, out progam has to receive the HTTP TCP response, and successfully decode it
+to save the HTTP body contents to a file. The result of running the program should be newly created files that contain the data received by
+the HTTP response(s).
 
 Summary: (Summarize your experience with the lab, what you learned, what you liked, what you
    disliked, and any suggestions you have for improvement) - EB
@@ -25,6 +27,7 @@ Summary: (Summarize your experience with the lab, what you learned, what you lik
 # import the "socket" module -- not using "from socket import *" in order to selectively use items
 # with "socket." prefix
 import socket
+import ssl
 
 # import the "regular expressions" module
 import re
@@ -43,7 +46,11 @@ def main():
                       'index.html')
     
     # HTTPS example. (Just for fun.)
-    # get_http_resource('https://www.httpvshttps.com/', 'https_index.html')
+    get_http_resource('https://www.httpvshttps.com/', 'https_index.html')
+
+    get_http_resource('https://www.google.com/', 'google.html')
+
+    get_http_resource('https://www.youtube.com/', 'youtube.html')
 
     # If you find fun examples of chunked or Content-Length pages, please share them with us!
 
@@ -103,8 +110,7 @@ def do_http_exchange(use_https, host, port, resource, file_name):
     :author: Lucas Gral
     """
 
-    http_client_socket = create_http_socket(host, port)
-    # if use_https ... in future
+    http_client_socket = create_http_socket(host, port, use_https)
     status = get_http_data(http_client_socket, host, resource, file_name)
     http_client_socket.close()
  
@@ -114,7 +120,7 @@ def do_http_exchange(use_https, host, port, resource, file_name):
 # Don't forget docstrings and :author: tags
 
 
-def create_http_socket(host, port):
+def create_http_socket(host, port, use_https):
     """
     Creates client socket and connects it to the server
 
@@ -126,7 +132,12 @@ def create_http_socket(host, port):
     """
     http_client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     http_client_socket.connect((host, port))
-    # http_socket.sendall(resource) needs to be called in http_send_request
+
+    if use_https:
+        context = ssl.create_default_context()
+        ssl_socket = context.wrap_socket(http_client_socket, server_hostname=host)
+        return ssl_socket
+
     return http_client_socket
 
 
@@ -199,7 +210,6 @@ def http_get_response(http_client_socket):
     :rtype: library
     :author: Eden Basso
     """
-    #resource = http_client_socket.recv(1)  # recieves recource data from client socket
 
     """
     #FOR TESTING http_get_word
@@ -216,7 +226,7 @@ def http_get_response(http_client_socket):
 
     resource_data = read_response_data(http_client_socket, resource_info) # uses resource type to get resource data in response body
 
-    return (status, resource_data, resource_info[b'Content-Type:'])
+    return (status, resource_data, resource_info[b'Content-Type:'] if (b'Content-Type:' in resource_info) else b'text/html;charset=utf-8')
 
 def http_get_status_code(http_client_socket):
     """
@@ -287,14 +297,16 @@ def read_chunked_response_data(http_client_socket, resource_type):
     :author: Lucas Gral
     """
 
-    return b'data chunked'
+    data = b''
 
-def ascii_bytes_to_int(bytes):
-    sum = 0
-    for i in range(0, len(bytes)):
-        sum += (bytes[i]-0x30) * 10**(len(bytes)-i-1)
+    while (chunkSize := http_get_word(http_client_socket)[0]) != b'0':
+        if(chunkSize == b''):
+            continue
+        print("Chunk of", chunkSize, "bytes")
+        for i in range(0, int(chunkSize.decode('ASCII'), 16)):
+            data += http_client_socket.recv(1)
 
-    return sum
+    return data
 
 def read_length_response_data(http_client_socket, resource_type):
     """
@@ -308,7 +320,7 @@ def read_length_response_data(http_client_socket, resource_type):
     """
 
     data = b''
-    content_length = ascii_bytes_to_int(resource_type[b'Content-Length:'])
+    content_length = int(resource_type[b'Content-Length:'].decode('ASCII'))
 
     for i in range(0, content_length):
         data += http_client_socket.recv(1)
