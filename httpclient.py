@@ -344,3 +344,17 @@ def save_resource_to_file(file_name, resource_data, resource_type):
 #  invokes main() function
 main()
 
+"""
+def execute_request(http_socket, request_data):
+    request_verb = request_data[0]
+    request_resource = request_data[1]
+    request_fields = request_data[2]
+    request_body = request_data[3]
+
+    if(request_verb == 'GET'):
+        execute_request_get(http_socket, request_resource)
+    elif(request_verb == etc):
+        ...
+    else:
+        print("Unknown request:", request_verb)
+"""
