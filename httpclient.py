@@ -19,9 +19,9 @@ Summary: (Summarize your experience with the lab, what you learned, what you lik
    disliked, and any suggestions you have for improvement) - EB
 While working on this lab, I learned how a program parses through an HTTP response in order to properly read through the
  specified data for that resource. Additionally, I learned that in order for HTTP messages to be sent across the
- network, there needs to be a socket that connects the port for the correct application to the network itself
- (this is done using UDP). Specifically, I learned more about the fields in the header lines of an
- HTTP response message- I enjoyed being able to use a tool such as the RFC for this lab to determine the conditions
+ network, there needs to be a socket that connects the port for the correct application to the network itself.
+ Specifically, I learned more about the fields in the header lines of an HTTP response message-
+ I enjoyed being able to use a tool such as the RFC for this lab to determine the conditions
  I would need to implement into my functions when determining whether a body was content-length or chunked.
  I have no specific suggestions for the lab but I will note that the work we did with wire shark
  was really valuable when completing this lab.
