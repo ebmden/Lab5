@@ -9,11 +9,11 @@
 An HTTP client
 
 Introduction: (Describe the lab in your own words) - LG
-The goal of this lab was to impliment an HTTP client; a program that makes HTTP requests, parses the responses, and saves the response data to a file,
-just like a web browser (albiet without the graphics). The program should send a valid HTTP request (via TCP) to the host provided
-to the http_do_exchange function. After making the request, out progam has to receive the HTTP TCP response, and successfully decode it
-to save the HTTP body contents to a file. The result of running the program should be newly created files that contain the data received by
-the HTTP response(s).
+The goal of this lab was to implement an HTTP client; a program that makes HTTP requests, parses the responses,
+and saves the response data to a file, just like a web browser (albiet without the graphics). The program should send a
+valid HTTP request (via TCP) to the host provided to the http_do_exchange function. After making the request,
+out program has to receive the HTTP TCP response, and successfully decode it to save the HTTP body contents to a file.
+The result of running the program should be newly created files that contain the data received by the HTTP response(s).
 
 Summary: (Summarize your experience with the lab, what you learned, what you liked, what you
    disliked, and any suggestions you have for improvement) - EB
@@ -127,8 +127,10 @@ def do_http_exchange(use_https, host, port, resource, file_name):
 def create_http_socket(host, port, use_https):
     """
     Creates client socket and connects it to the server
+
     :param bytes host: ASCII domain name or IP address of host
     :param int port: port number to connect to on server host
+    :param bool use_https: indicates whether the resource uses http or not
     :return: client data socket
     :rtype: socket.pyi
     :author: Eden Basso
@@ -138,7 +140,7 @@ def create_http_socket(host, port, use_https):
 
     if use_https:
         context = ssl.create_default_context()
-        ssl_socket = context.wrap_socket(http_client_socket, server_hostname=host)
+        ssl_socket = context.wrap_socket(http_client_socket, server_hostname = host)
         return ssl_socket
 
     return http_client_socket
@@ -147,9 +149,10 @@ def create_http_socket(host, port, use_https):
 def get_http_data(http_client_socket, host, resource, file_name):
     """
     Sends HTTP request to receive data from socket and saves the appropriately parsed body to a file
+
     :param socket.pyi http_client_socket: the client data socket used to collect the resource of the URL
-    :param bytes resource: the ASCII path/name of resource to get. This is everything in the URL
-           after the domain name, including the first /.
+    :param bytes host: the ASCII domain name or IP address of of the host
+    :param bytes resource: the ASCII path/name of resource to get
     :param file_name: string (str) containing name of file in which to store the retrieved resource
     :return: status
     :rtype: int
@@ -158,17 +161,17 @@ def get_http_data(http_client_socket, host, resource, file_name):
     http_send_request(http_client_socket, host, resource)
     (status, resource_data, resource_type) = http_get_response(
         http_client_socket)  # http_client_socket may need to return a Dictionary at somepoint once method is complete
-    save_resource_to_file(file_name, resource_data, resource_type)
+    save_resource_to_file(file_name, resource_data)
     return status
 
 
 def http_send_request(http_client_socket, host, resource):
     """
-    ...
-    :param:
-    :param:
-    :return:
-    :rtype:
+    Client socket sends request to server and indicates that a request has been sent
+
+    :param socket.pyi http_client_socket: the client data socket used to collect the resource of the URL
+    :param bytes host: the ASCII domain name or IP address of of the host
+    :param bytes resource: the ASCII path/name of resource to get
     :author: Lucas Gral
     """
 
@@ -182,31 +185,33 @@ def http_send_request(http_client_socket, host, resource):
 
 def http_get_word(http_client_socket):
     """
-    Gets the next string of characters surounded by space or ending in \r\n
+    Gets the next string of characters surrounded by space or ending in \r\n
     Returns the string, and also whether it's the end of the line.
     This could be used instead of next_byte or socket.recv
+
     :param socket.pyi http_client_socket: client data socket
     :return: (word, endOfLine)
-    :rtype: tuple
+    :rtype: Any
     :author: Eden Basso
     """
 
-    lastByte = b''
+    last_byte = b''
     word = b''
-    while (lastByte := http_client_socket.recv(1)) != b' ':
-        if (lastByte == b'\r'):
-            if ((lastByte := http_client_socket.recv(1)) == b'\n'):
-                return (word, True)
+    while (last_byte := http_client_socket.recv(1)) != b' ':
+        if last_byte == b'\r':
+            if (last_byte := http_client_socket.recv(1)) == b'\n':
+                return word, True
             else:
-                word += b'\r' + lastByte
+                word += b'\r' + last_byte
         else:
-            word += lastByte
-    return (word, False)
+            word += last_byte
+    return word, False
 
 
 def http_get_response(http_client_socket):
     """
     Parses through response to determine what protocol to use for reading its data
+
     :param socket.pyi http_client_socket: client data socket
     :return: library holding information necessary to save data
     :rtype: library
@@ -237,6 +242,7 @@ def http_get_response(http_client_socket):
 def http_get_status_code(http_client_socket):
     """
     Gets the status code from the first http response line
+
     :param socket.pyi http_client_socket: client data socket
     :return: status code
     :rtype: int
@@ -254,10 +260,11 @@ def http_get_status_code(http_client_socket):
 def http_read_header(http_client_socket):
     """
     Parses through the status line to determine the size of the body and if the data is chunked or content length
-    :param socket http_client_socket: the client socket to receive from
+
+    :param socket.pyi http_client_socket: the client socket to receive from
     :return: dictionary of all header fields
     :rtype: Dictionary
-    :author: Eden Basso:
+    :author: Eden Basso
     """
     resource_info = dict()
 
@@ -278,6 +285,7 @@ def http_read_header(http_client_socket):
 def read_response_data(http_client_socket, resource_type):
     """
     Gets the body of the response, and interprets it via resource_type
+
     :param socket http_client_socket: the client socket to receive from
     :param dictionary resource_type: key value pairs for the resource fields
     :return: the resource data
@@ -288,14 +296,14 @@ def read_response_data(http_client_socket, resource_type):
     if b'Content-Length:' in resource_type:
         return read_length_response_data(http_client_socket, resource_type)
     elif (b'Transfer-Encoding:' in resource_type) and (resource_type[b'Transfer-Encoding:'] == b'chunked'):
-        return read_chunked_response_data(http_client_socket, resource_type)
+        return read_chunked_response_data(http_client_socket)
 
 
-def read_chunked_response_data(http_client_socket, resource_type):
+def read_chunked_response_data(http_client_socket):
     """
-    Interprets body of response as chuncked
-    :param socket http_client_socket: the client socket to receive from
-    :param dictionary resource_type: key value pairs for the resource fields
+    Interprets body of response as chunked
+
+    :param socket.pyi http_client_socket: the client socket to receive from
     :return: the resource data
     :rtype: bytes
     :author: Lucas Gral
@@ -304,7 +312,7 @@ def read_chunked_response_data(http_client_socket, resource_type):
     data = b''
 
     while (chunkSize := http_get_word(http_client_socket)[0]) != b'0':
-        if (chunkSize == b''):
+        if chunkSize == b'':
             continue
         print("Chunk of", chunkSize, "bytes")
         for i in range(0, int(chunkSize.decode('ASCII'), 16)):
@@ -316,7 +324,8 @@ def read_chunked_response_data(http_client_socket, resource_type):
 def read_length_response_data(http_client_socket, resource_type):
     """
     Interprets body of response as one stream of length content-length
-    :param socket http_client_socket: the client socket to receive from
+
+    :param socket.pyi http_client_socket: the client socket to receive from
     :param dictionary resource_type: key value pairs for the resource fields
     :return: the resource data
     :rtype: bytes
@@ -332,11 +341,11 @@ def read_length_response_data(http_client_socket, resource_type):
     return data
 
 
-def save_resource_to_file(file_name, resource_data, resource_type):
+def save_resource_to_file(file_name, resource_data):
     """
     Saves the body of the response to a file
+
     :param str file_name: name of the file the resource will be saved to
-    :param str resource_type: type of body the response has
     :param bytes resource_data: data that will be saved to the file
     :return: the file containing the read-through data in it
     :rtype: file
